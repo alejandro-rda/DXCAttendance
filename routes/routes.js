@@ -57,7 +57,7 @@ router.put("/updateAsistencia", function(req, res, next) {
     }
 );
 
-let updateDocument = function (db, callback, uID, resourceID, endDate, endLocation) {
+let updateDocument = function (db, callback, uID, endDate, endLocation) {
 
     let newvalues = {$set: {enddate: endDate, endlocation: endLocation}};
     let query = {_id: ObjectID(uID)};
