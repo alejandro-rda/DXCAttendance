@@ -44,7 +44,6 @@ let insertDocument = function (db, callback, resourceID, startDate, startLocatio
 router.put("/updateAsistencia", function(req, res, next) {
 
         let uID = req.body.id;
-        let resourceId = req.body.resource;
         let endDate = req.body.enddate;
         let endLocation = req.body.endlocation;
 
@@ -52,7 +51,7 @@ router.put("/updateAsistencia", function(req, res, next) {
             assert.equal(null, err);
             let db = client.db('dxc_asistencia');
             updateDocument(db, function () {
-            } ,uID, resourceId, endDate, endLocation);
+            } ,uID, endDate, endLocation);
         });
     res.end("Se actualizo el registro de asistencia correctamente.");
     }
@@ -61,7 +60,7 @@ router.put("/updateAsistencia", function(req, res, next) {
 let updateDocument = function (db, callback, uID, resourceID, endDate, endLocation) {
 
     let newvalues = {$set: {enddate: endDate, endlocation: endLocation}};
-    let query = {_id: ObjectID(uID), resource: resourceID};
+    let query = {_id: ObjectID(uID)};
 
     db.collection('asistance').updateOne(
     query,newvalues, function (err, result) {
