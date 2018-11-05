@@ -4,7 +4,6 @@ const express = require('express');
 const ObjectID = require("mongodb").ObjectID;
 let router = express.Router();
 const url = 'mongodb://dxc-asistencia:73VbZeHtYmTovwPNzIAOp6AnrhIyhxG80FHNeyvR7MWwNbJAF8oFgLWgsUFpwSeY5avcMMEeSgyNrqYYdTsrtg%3D%3D@dxc-asistencia.documents.azure.com:10255/?ssl=true&replicaSet=globaldb';
-let lastIDInserted;
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -36,8 +35,8 @@ let insertDocument = function (db, callback, resourceID, startDate, startLocatio
     }, function (err, result) {
         assert.equal(err, null);
         console.log("Se inserto el registro de asistencia correctamente.");
-        lastIDInserted = result.insertedId;
-        response.end(response.json(lastIDInserted))
+        let lastIDInserted = result.insertedId.toString();
+        response.end(lastIDInserted);
     },);
 };
 
