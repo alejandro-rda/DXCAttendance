@@ -39,6 +39,7 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
         "resource": resourceID,
         "startdate": startDate,
         "startlocation ": startLocation,
+        "completed": 0,
         "enddate": null,
         "endlocation": null,
     }, function (err, result) {
@@ -66,7 +67,7 @@ let updateDocument = function (callback, uID, endDate, endLocation) {
 
     let ModelAsistencia = db.collection("asistance");
 
-    let newvalues = {$set: {enddate: endDate, endlocation: endLocation}};
+    let newvalues = {$set: {enddate: endDate, endlocation: endLocation, completed: 1}};
     let query = {_id: ObjectID(uID)};
 
     ModelAsistencia.updateOne(
@@ -115,7 +116,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         let queryYesterday = {
             resource: var_resource,
             startdate: new RegExp(yesterday),
-            enddate: null
+            completed: 0
         };
 
         async.parallel({
