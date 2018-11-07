@@ -57,13 +57,12 @@ router.put("/updateAsistencia", function (req, res, next) {
         let endLocation = req.body.endlocation;
 
         updateDocument(function () {
-            res.end(res.json(null))
-        }, uID, endDate, endLocation)
+        }, uID, endDate, endLocation, res)
         ;
     }
 );
 
-let updateDocument = function (callback, uID, endDate, endLocation) {
+let updateDocument = function (callback, uID, endDate, endLocation, res) {
 
     let ModelAsistencia = db.collection("asistance");
 
@@ -74,6 +73,7 @@ let updateDocument = function (callback, uID, endDate, endLocation) {
         query, newvalues, function (err, result) {
             assert.equal(err, null);
             console.log("Se actualizo el registro de asistencia correctamente.");
+            res.end(res.json("Se actualizo el registro de asistencia correctamente."));
         });
 };
 
