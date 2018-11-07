@@ -35,7 +35,7 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
 
     let ModelAsistencia = db.collection("asistance");
 
-   ModelAsistencia.insertOne({
+    ModelAsistencia.insertOne({
         "resource": resourceID,
         "startdate": startDate,
         "startlocation ": startLocation,
@@ -100,6 +100,11 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
             startdate: new RegExp(today)
         };
 
+        let queryFirst = {
+            resource: var_resource,
+            enddate: new RegExp(today)
+        };
+
         let yesterday = calcTime("Lima", -5);
         yesterday.setDate(yesterday.getDate() - 1);
         dd = yesterday.getDate();
@@ -113,6 +118,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         }
 
         yesterday = yyyy + '-' + mm + '-' + dd;
+
         let queryYesterday = {
             resource: var_resource,
             startdate: new RegExp(yesterday),
@@ -120,6 +126,9 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         };
 
         async.parallel({
+            assistanceFirstToday: function (cb) {
+                ModelAsistencia.find(queryFirst).toArray(cb)
+            },
             assistanceToday: function (cb) {
                 ModelAsistencia.find(query).toArray(cb)
             },
@@ -132,16 +141,22 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
             if (results.assistanceToday.length > 0) {
                 res.end(res.json(results.assistanceToday));
             } else {
-                if (results.assistanceLastYesterday.length > 0) {
-                    res.end(res.json(results.assistanceLastYesterday))
+                if (results.assistanceFirstToday.length > 0) {
+                    res.end(res.json(results.assistanceFirstToday));
                 }
                 else {
-                    res.end(res.json("No se encuentran registros de asistencia del dia."));
+                    if (results.assistanceLastYesterday.length > 0) {
+                        res.end(res.json(results.assistanceLastYesterday))
+                    }
+                    else {
+                        res.end(res.json(null));
+                    }
                 }
             }
         });
     }
-);
+)
+;
 
 function calcTime(city, offset) {
 
@@ -155,10 +170,11 @@ function calcTime(city, offset) {
 
     // create new Date object for different city
     // using supplied offset
-    nd = new Date(utc + (3600000*offset));
+    nd = new Date(utc + (3600000 * offset));
 
     // return time as a string
     console.log("The local time in " + city + " is " + nd.toLocaleString());
     return nd;
 }
+
 module.exports = router;
