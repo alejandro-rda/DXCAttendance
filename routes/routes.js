@@ -130,7 +130,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                 ModelAsistencia.find(queryFirst).toArray(cb)
             },
             assistanceToday: function (cb) {
-                ModelAsistencia.find(query).toArray(cb)
+                ModelAsistencia.find(query, {sort: {startdate: 1, enddate:1}}).toArray(cb)
             },
             assistanceLastYesterday: function (cb) {
                 ModelAsistencia.find(
