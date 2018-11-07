@@ -57,7 +57,7 @@ router.put("/updateAsistencia", function (req, res, next) {
         let endLocation = req.body.endlocation;
 
         updateDocument(function () {
-            res.end("Se actualizo el registro de asistencia correctamente.")
+            res.end(res.json(null))
         }, uID, endDate, endLocation)
         ;
     }
