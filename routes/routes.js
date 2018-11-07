@@ -82,7 +82,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         let ModelAsistencia = db.collection("asistance");
         let var_resource = req.params.resourceID;
 
-        let today = new Date();
+        let today = calcTime("Lima", -5);
         let dd = today.getDate();
         let mm = today.getMonth() + 1;
         let yyyy = today.getFullYear();
@@ -100,7 +100,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
             startdate: new RegExp(today)
         };
 
-        let yesterday = new Date();
+        let yesterday = calcTime("Lima", -5);
         yesterday.setDate(yesterday.getDate() - 1);
         dd = yesterday.getDate();
         mm = yesterday.getMonth() + 1;
@@ -143,4 +143,22 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
     }
 );
 
+function calcTime(city, offset) {
+
+    // create Date object for current location
+    d = new Date();
+
+    // convert to msec
+    // add local time zone offset
+    // get UTC time in msec
+    utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+
+    // create new Date object for different city
+    // using supplied offset
+    nd = new Date(utc + (3600000*offset));
+
+    // return time as a string
+    console.log("The local time in " + city + " is " + nd.toLocaleString());
+    return nd;
+}
 module.exports = router;
