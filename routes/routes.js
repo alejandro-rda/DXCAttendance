@@ -37,8 +37,8 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
 
     ModelAsistencia.insertOne({
         "resource": resourceID,
-        "startdate": startDate,
-        "startlocation ": startLocation,
+        "startdate": calcTime(-5),
+        "startlocation": startLocation,
         "completed": 0,
         "enddate": null,
         "endlocation": null,
@@ -66,7 +66,14 @@ let updateDocument = function (callback, uID, endDate, endLocation, res) {
 
     let ModelAsistencia = db.collection("asistance");
 
-    let newvalues = {$set: {enddate: endDate, endlocation: endLocation, completed: 1}};
+    let newvalues = {
+        $set: {
+            enddate: calcTime(-5),
+            endlocation: endLocation,
+            completed: 1
+        }
+    };
+
     let query = {_id: ObjectID(uID)};
 
     ModelAsistencia.updateOne(
@@ -82,98 +89,219 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         let ModelAsistencia = db.collection("asistance");
         let var_resource = req.params.resourceID;
 
-        let today = calcTime("Lima", -5);
-        let dd = today.getDate();
-        let mm = today.getMonth() + 1;
-        let yyyy = today.getFullYear();
-        if (dd < 10) {
-            dd = '0' + dd;
-        }
-        if (mm < 10) {
-            mm = '0' + mm;
-        }
-        today = yyyy + '-' + mm + '-' + dd;
+        let today = calcTime(-5);
+        today.setHours(0, 0, 0);
 
-
-        let query = {
-            resource: var_resource,
-            startdate: new RegExp(today)
-        };
-
-        let queryFirst = {
-            resource: var_resource,
-            enddate: new RegExp(today)
-        };
-
-        let yesterday = calcTime("Lima", -5);
+        let yesterday = calcTime(-5);
         yesterday.setDate(yesterday.getDate() - 1);
-        dd = yesterday.getDate();
-        mm = yesterday.getMonth() + 1;
-        yyyy = yesterday.getFullYear();
-        if (dd < 10) {
-            dd = '0' + dd;
-        }
-        if (mm < 10) {
-            mm = '0' + mm;
-        }
-
-        yesterday = yyyy + '-' + mm + '-' + dd;
-
-        let queryYesterday = {
-            resource: var_resource,
-            startdate: new RegExp(yesterday),
-            completed: 0
-        };
+        yesterday.setHours(0, 0, 0);
 
         async.parallel({
-            assistanceFirstToday: function (cb) {
-                ModelAsistencia.find(queryFirst).toArray(cb)
-            },
-            assistanceToday: function (cb) {
-                ModelAsistencia.find(query, {sort: {startdate: 1, enddate:1}}).toArray(cb)
-            },
-            assistanceLastYesterday: function (cb) {
-                ModelAsistencia.find(
-                    queryYesterday,
-                    {sort: {startdate: -1}, limit: 1}).toArray(cb);
-            }
-        }, function (err, results) {
-            if (results.assistanceToday.length > 0) {
-                res.end(res.json(results.assistanceToday));
-            } else {
-                if (results.assistanceFirstToday.length > 0) {
-                    res.end(res.json(results.assistanceFirstToday));
+                assistanceFirstToday: function (cb) {
+                    ModelAsistencia.aggregate([
+                        {
+                            $match: {
+                                resource: var_resource,
+                                enddate: {'$gte': today}
+                            }
+                        },
+                        {
+                            $project: {
+                                endlocation: 1,
+                                startlocation: 1,
+                                resource: 1,
+                                completed: 1,
+                                startdate: {
+                                    $dateToString: {
+                                        format: "%Y-%m-%d %H:%M:%S",
+                                        date: {"$add": ["$startdate", 3600000 * -5]}
+                                    }
+                                },
+                                enddate: {
+                                    $dateToString: {
+                                        format: "%Y-%m-%d %H:%M:%S",
+                                        date:
+                                            {"$add": ["$enddate", 3600000 * -5]}
+
+                                    }
+                                }
+                            }
+                        },
+                        {$sort: {stardate: 1}},
+                        {$limit: 1}
+                    ]).toArray(cb)
+                },
+
+                assistanceToday: function (cb) {
+                    ModelAsistencia.aggregate([
+                        {
+                            $match: {
+                                resource: var_resource,
+                                startdate: {'$gte': today}
+                            }
+                        },
+                        {
+                            $project: {
+                                endlocation: 1,
+                                startlocation: 1,
+                                resource: 1,
+                                completed: 1,
+                                startdate: {
+                                    $dateToString: {
+                                        format: "%Y-%m-%d %H:%M:%S",
+                                        date: {"$add": ["$startdate", 3600000 * -5]}
+                                    }
+                                },
+                                enddate: {
+                                    $dateToString: {
+                                        format: "%Y-%m-%d %H:%M:%S",
+                                        date:
+                                            {"$add": ["$enddate", 3600000 * -5]}
+
+                                    }
+                                }
+                            }
+                        },
+                        {$sort: {stardate: 1, enddate: 1}},
+                    ]).toArray(cb)
+                },
+                assistanceLastYesterday: function (cb) {
+                    ModelAsistencia.aggregate([
+                        {
+                            $match: {
+                                resource: var_resource,
+                                startdate: {'$gte': yesterday},
+                                completed: 0
+                            }
+                        },
+                        {
+                            $project: {
+                                endlocation: 1,
+                                startlocation: 1,
+                                resource: 1,
+                                completed: 1,
+                                startdate: {
+                                    $dateToString: {
+                                        format: "%Y-%m-%d %H:%M:%S",
+                                        date: {"$add": ["$startdate", 3600000 * -5]}
+                                    }
+                                },
+                                enddate: {
+                                    $dateToString: {
+                                        format: "%Y-%m-%d %H:%M:%S",
+                                        date:
+                                            {"$add": ["$enddate", 3600000 * -5]}
+
+                                    }
+                                }
+                            }
+                        },
+                        {$sort: {stardate: 1, enddate: 1}},
+                        {$limit: 1},
+                    ]).toArray(cb);
                 }
-                else {
-                    if (results.assistanceLastYesterday.length > 0) {
-                        res.end(res.json(results.assistanceLastYesterday))
+            },
+
+            function (err, results) {
+
+                if (results.assistanceToday.length > 0) {
+                    res.end(res.json(results.assistanceToday));
+                } else {
+                    if (results.assistanceFirstToday.length > 0) {
+                        res.end(res.json(results.assistanceFirstToday));
                     }
                     else {
-                        res.end(res.json(null));
+                        if (results.assistanceLastYesterday.length > 0) {
+                            res.end(res.json(results.assistanceLastYesterday))
+                        }
+                        else {
+                            res.end(res.json(null));
+                        }
                     }
                 }
+            }
+        )
+        ;
+    }
+)
+;
+
+router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", function (req, res, next) {
+
+        let ModelAsistencia = db.collection("asistance");
+        let var_resource = req.params.resourceID;
+
+        let startDate = req.params.startDate;
+        let start = new Date(startDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+        start.setHours(0, 0, 0);
+
+        console.log(start.toLocaleDateString() + " " + start.toLocaleTimeString());
+
+
+        let endDate = req.params.endDate;
+        let end = new Date(endDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+        end.setHours(23, 59, 59);
+
+        console.log(end.toLocaleDateString() + " " + end.toLocaleTimeString());
+
+
+        async.parallel({
+            assistanceHistoric: function (cb) {
+                ModelAsistencia.aggregate([
+                    {
+                        $project: {
+                            endlocation: 1,
+                            startlocation: 1,
+                            resource: 1,
+                            completed: 1,
+                            validStartDate: {'$gte': [{"$add": ["$startdate", 3600000 * -5]}, start]},
+                            validEndDate:   {'$lte': [{"$add": ["$enddate", 3600000 * -5]}, end]},
+                            startdate: {
+                                $dateToString: {
+                                    format: "%Y-%m-%d %H:%M:%S",
+                                    date: {"$add": ["$startdate", 3600000 * -5]}
+                                }
+                            },
+                            enddate: {
+                                $dateToString: {
+                                    format: "%Y-%m-%d %H:%M:%S",
+                                    date:
+                                        {"$add": ["$enddate", 3600000 * -5]}
+
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $match: {
+                            resource: var_resource,
+                            validStartDate: true,
+                            validEndDate: true
+                        }
+                    },
+                    {$sort: {stardate: 1, enddate: 1}}
+                ]).toArray(cb);
+            }
+        }, function (err, results) {
+
+            if (results.assistanceHistoric.length > 0) {
+                res.end(res.json(results.assistanceHistoric));
+            } else {
+                res.end(res.json(null));
             }
         });
     }
 )
 ;
 
-function calcTime(city, offset) {
+function calcTime(offset) {
 
-    // create Date object for current location
     d = new Date();
-
-    // convert to msec
-    // add local time zone offset
-    // get UTC time in msec
+    console.log(d.toLocaleDateString() + " " + d.toLocaleTimeString());
     utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-
-    // create new Date object for different city
-    // using supplied offset
     nd = new Date(utc + (3600000 * offset));
 
-    // return time as a string
-    console.log("The local time in " + city + " is " + nd.toLocaleString());
+    console.log("Local Date: " + nd.toLocaleString());
     return nd;
 }
 
