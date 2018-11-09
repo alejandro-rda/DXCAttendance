@@ -1,5 +1,6 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+const moment = require('moment-timezone');
 const express = require('express');
 const ObjectID = require("mongodb").ObjectID;
 const async = require('async');
@@ -89,12 +90,20 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         let ModelAsistencia = db.collection("asistance");
         let var_resource = req.params.resourceID;
 
-        let today = calcTime(-5);
-        today.setHours(0, 0, 0);
+        let today  = new Date();
+        today.setHours(0,0,0);
 
-        let yesterday = calcTime(-5);
+        let fecha = moment(today);
+        fecha.tz('America/Lima');
+        let fechaInicio = new Date(fecha);
+
+        let yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         yesterday.setHours(0, 0, 0);
+
+        let fechaAyer = moment(yesterday);
+        fechaAyer.tz('America/Lima');
+        let fechaFin = new Date(fecha);
 
         async.parallel({
                 assistanceFirstToday: function (cb) {
@@ -102,7 +111,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                         {
                             $match: {
                                 resource: var_resource,
-                                enddate: {'$gte': today}
+                                enddate: {'$gte': fechaInicio}
                             }
                         },
                         {
@@ -137,7 +146,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: {'$gte': today}
+                                startdate: {'$gte': fechaInicio}
                             }
                         },
                         {
@@ -170,7 +179,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: {'$gte': yesterday},
+                                startdate: {'$gte': fechaFin},
                                 completed: 0
                             }
                         },
@@ -293,16 +302,5 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
     }
 )
 ;
-
-function calcTime(offset) {
-
-    d = new Date();
-    console.log(d.toLocaleDateString() + " " + d.toLocaleTimeString());
-    utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-    nd = new Date(utc + (3600000 * offset));
-
-    console.log("Local Date: " + nd.toLocaleString());
-    return nd;
-}
 
 module.exports = router;
