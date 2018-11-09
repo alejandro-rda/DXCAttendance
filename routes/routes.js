@@ -94,8 +94,9 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
         today.setHours(0,0,0);
 
         let fecha = moment(today);
-        fecha.tz('America/Lima');
+        fecha.add(-5, 'hours');
         let fechaInicio = new Date(fecha);
+        console.log(fechaInicio);
 
         let yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
