@@ -85,26 +85,18 @@ let updateDocument = function (callback, uID, endDate, endLocation, res) {
         });
 };
 
-router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
+router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, next) {
 
         let ModelAsistencia = db.collection("asistance");
         let var_resource = req.params.resourceID;
+        let currDate = req.params.currDate;
 
-        let today  = new Date();
-        today.setHours(0,0,0);
+        let start = new Date(currDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+        start.setHours(0, 0, 0);
 
-        let fecha = moment(today);
-        fecha.add(-5, 'hours');
-        let fechaInicio = new Date(fecha);
-        console.log(fechaInicio);
-
-        let yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0);
-
-        let fechaAyer = moment(yesterday);
-        fechaAyer.tz('America/Lima');
-        let fechaFin = new Date(fecha);
+        let end = new Date(currDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+        end.setDate(end.getDate() - 1);
+        end.setHours(0, 0, 0);
 
         async.parallel({
                 assistanceFirstToday: function (cb) {
@@ -112,7 +104,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                         {
                             $match: {
                                 resource: var_resource,
-                                enddate: {'$gte': fechaInicio}
+                                enddate: {'$gte': start}
                             }
                         },
                         {
@@ -147,7 +139,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: {'$gte': fechaInicio}
+                                startdate: {'$gte': start}
                             }
                         },
                         {
@@ -180,7 +172,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID", function (req, res, next) {
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: {'$gte': fechaFin},
+                                startdate: {'$gte': end},
                                 completed: 0
                             }
                         },
