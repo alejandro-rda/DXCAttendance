@@ -37,7 +37,7 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
 
     ModelAsistencia.insertOne({
         "resource": resourceID,
-        "startdate": calcTime(-5),
+        "startdate": new Date(),
         "startlocation": startLocation,
         "completed": 0,
         "enddate": null,
@@ -68,7 +68,7 @@ let updateDocument = function (callback, uID, endDate, endLocation, res) {
 
     let newvalues = {
         $set: {
-            enddate: calcTime(-5),
+            enddate: new Date(),
             endlocation: endLocation,
             completed: 1
         }
