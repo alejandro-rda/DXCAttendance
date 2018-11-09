@@ -91,28 +91,23 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
         let var_resource = req.params.resourceID;
         let currDate = req.params.currDate;
 
-        let start = new Date(currDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
-        start.setHours(0, 0, 0);
+        let today = new Date(currDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+        today.setHours(0, 0, 0);
 
-        let end = new Date(currDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
-        end.setDate(end.getDate() - 1);
-        end.setHours(0, 0, 0);
+        let yesterday = new Date(currDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
+        yesterday.setDate(end.getDate() - 1);
+        yesterday.setHours(0, 0, 0);
 
         async.parallel({
                 assistanceFirstToday: function (cb) {
                     ModelAsistencia.aggregate([
-                        {
-                            $match: {
-                                resource: var_resource,
-                                enddate: {'$gte': start}
-                            }
-                        },
                         {
                             $project: {
                                 endlocation: 1,
                                 startlocation: 1,
                                 resource: 1,
                                 completed: 1,
+                                validDate: {'$gte': [{"$add": ["$endDate", 3600000 * -5]}, today]},
                                 startdate: {
                                     $dateToString: {
                                         format: "%Y-%m-%d %H:%M:%S",
@@ -127,6 +122,12 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
 
                                     }
                                 }
+                            }
+                        },
+                        {
+                            $match: {
+                                resource: var_resource,
+                                validDate: true,
                             }
                         },
                         {$sort: {stardate: 1}},
@@ -142,7 +143,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                                 startlocation: 1,
                                 resource: 1,
                                 completed: 1,
-                                validStartDate: {'$gte': [{"$add": ["$startdate", 3600000 * -5]}, start]},
+                                validDate: {'$gte': [{"$add": ["$startdate", 3600000 * -5]}, today]},
                                 startdate: {
                                     $dateToString: {
                                         format: "%Y-%m-%d %H:%M:%S",
@@ -162,7 +163,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                         {
                             $match: {
                                 resource: var_resource,
-                                validStartDate: true
+                                validDate: true
                             }
                         },
                         {$sort: {stardate: 1, enddate: 1}},
@@ -171,18 +172,12 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                 assistanceLastYesterday: function (cb) {
                     ModelAsistencia.aggregate([
                         {
-                            $match: {
-                                resource: var_resource,
-                                startdate: {'$gte': end},
-                                completed: 0
-                            }
-                        },
-                        {
                             $project: {
                                 endlocation: 1,
                                 startlocation: 1,
                                 resource: 1,
                                 completed: 1,
+                                validDate: {'$gte': [{"$add": ["$startdate", 3600000 * -5]}, yesterday]},
                                 startdate: {
                                     $dateToString: {
                                         format: "%Y-%m-%d %H:%M:%S",
@@ -197,6 +192,13 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
 
                                     }
                                 }
+                            }
+                        },
+                        {
+                            $match: {
+                                resource: var_resource,
+                                validDate: true,
+                                completed:0
                             }
                         },
                         {$sort: {stardate: 1, enddate: 1}},
