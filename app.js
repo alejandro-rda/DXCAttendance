@@ -20,7 +20,7 @@ app.use(express.urlencoded({limit: '50mb'}));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    consolo.log(err)
+    console.log(err)
 });
 
 // error handler

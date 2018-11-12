@@ -395,12 +395,11 @@ router.get('/getProfilePicture/:resourceID', (req, res, next) => {
 
     ModelAsistencia.findOne(
         {"resource": resourceID},
-        {"url": "url"},
         function (err, result) {
 
             if (err) {
                 console.log(err);
-                return;
+                res.end(res.json(err));
             }
 
            res.end(res.json(result));
