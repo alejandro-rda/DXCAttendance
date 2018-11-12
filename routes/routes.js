@@ -403,17 +403,7 @@ router.get('/getProfilePicture/:resourceID', (req, res, next) => {
                 return;
             }
 
-            console.log(result);
-            const file = fs.createWriteStream("./tmp/" + req.params.resourceID + ".jpg");
-
-            blobService.getBlobToStream(containerName, result.url, file, {'disableContentMD5Validation': true },
-                function callback (err, data) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    res.end(res.json(data));
-                }
-            });
+           res.end(res.json(result));
 
         });
 
