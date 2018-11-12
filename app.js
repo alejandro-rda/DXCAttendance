@@ -15,10 +15,12 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb'}));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    next(createError(404));
+    consolo.log(err)
 });
 
 // error handler

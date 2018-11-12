@@ -2,11 +2,31 @@ const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const moment = require('moment-timezone');
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const ObjectID = require("mongodb").ObjectID;
 const async = require('async');
 const url = 'mongodb://dxc-asistencia-2:8wDyfljQlOopuzGRrriq0JU3xFh1CNIPfWUTbubYD58S4E7XQZdomFY8MFfg6gQVBe2fEBLKv9hs0HtkzdyCEw%3D%3D@dxc-asistencia-2.documents.azure.com:10255/?ssl=true&replicaSet=globaldb';
-let router = express.Router();
 let db = null;
+let router = express.Router();
+
+let connectionString = "DefaultEndpointsProtocol=https;AccountName=dxcstorageattendance;AccountKey=H3RR5kLymDXx/tXBtU18X1pKs2yghteXDA58lrEYOT7jD1iyE9/vXjWMbd6MF0/0B/btMTlaZaDx0XRcQIaaEQ==;EndpointSuffix=core.windows.net";
+
+const storageName = {
+    getStorageAccountName: () => {
+        const matches = /AccountName=(.*?);/.exec(connectionString);
+        return matches[1];
+    }
+};
+
+const multer = require('multer')
+    , inMemoryStorage = multer.memoryStorage()
+    , uploadStrategy = multer({storage: inMemoryStorage}).single('image')
+    , azureStorage = require('azure-storage')
+    , blobService = azureStorage.createBlobService(connectionString)
+    , getStream = require('into-stream')
+    , containerName = 'dxcprofilepictures',
+    BlockBlobURL  = require('azure-storage');
 
 MongoClient.connect(url, function (err, client) {
     if (err) {
@@ -124,7 +144,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: { $regex: currDate, $options: 'g'},
+                                startdate: {$regex: currDate, $options: 'g'},
                             }
                         },
                         {$sort: {stardate: 1}},
@@ -159,7 +179,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: { $regex: currDate, $options: 'g'},
+                                startdate: {$regex: currDate, $options: 'g'},
                             }
                         },
                         {$sort: {stardate: 1, enddate: 1}},
@@ -192,8 +212,8 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                         {
                             $match: {
                                 resource: var_resource,
-                                startdate: { $regex: yesterDayResult, $options: 'g'},
-                                completed:0
+                                startdate: {$regex: yesterDayResult, $options: 'g'},
+                                completed: 0
                             }
                         },
                         {$sort: {stardate: 1, enddate: 1}},
@@ -230,20 +250,17 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
 
         let ModelAsistencia = db.collection("asistance");
         let var_resource = req.params.resourceID;
-
         let startDate = req.params.startDate;
         let start = new Date(startDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
         start.setHours(0, 0, 0);
 
         console.log(start.toLocaleDateString() + " " + start.toLocaleTimeString());
 
-
         let endDate = req.params.endDate;
         let end = new Date(endDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
         end.setHours(23, 59, 59);
 
         console.log(end.toLocaleDateString() + " " + end.toLocaleTimeString());
-
 
         async.parallel({
             assistanceHistoric: function (cb) {
@@ -255,7 +272,7 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
                             resource: 1,
                             completed: 1,
                             validStartDate: {'$gte': [{"$add": ["$startdate", 3600000 * -5]}, start]},
-                            validEndDate:   {'$lte': [{"$add": ["$enddate", 3600000 * -5]}, end]},
+                            validEndDate: {'$lte': [{"$add": ["$enddate", 3600000 * -5]}, end]},
                             startdate: {
                                 $dateToString: {
                                     format: "%Y-%m-%d %H:%M:%S",
@@ -293,5 +310,113 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
     }
 )
 ;
+
+const getBlobName = originalName => {
+    const identifier = Math.random().toString().replace(/0\./, ''); // remove "0." from start of string
+    return `${identifier}-${originalName}`;
+};
+
+router.post('/uploadProfilePicture', uploadStrategy, (req, res) => {
+
+    const
+        blobName = getBlobName(req.file.originalname)
+        , stream = getStream(req.file.buffer)
+        , streamLength = req.file.buffer.length
+    ;
+
+    blobService.createBlockBlobFromStream(containerName, blobName, stream, streamLength, function callback(err, result, response) {
+
+        if (err) {
+            console.log(err);
+            return;
+        }
+
+
+        let resourceId = req.body.resource;
+        getProfile(function () {
+        }, resourceId, blobName, res);
+
+    });
+});
+
+let insertProfile = function (callback, resourceID, URLimageStorage, response) {
+
+    let ModelAsistencia = db.collection("profile");
+
+    ModelAsistencia.replaceOne(
+        {"resource": resourceID},
+        {"resource": resourceID, "url": URLimageStorage},
+        {upsert: true},
+        function (err, result) {
+            assert.equal(err, null);
+            response.end(response.json(result));
+        });
+
+};
+
+let getProfile = function (callback, resourceID, URLimageStorage, response) {
+
+    let ModelAsistencia = db.collection("profile");
+
+    ModelAsistencia.findOne(
+        {"resource": resourceID},
+        {"url": "url"},
+        function (err, result) {
+
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            // if retrieve a element, delete the last block of resource id
+            if (result != null) {
+                blobService.deleteBlob(containerName, result.url, function (err, response, next) {
+
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+
+                    console.log("Se elimino el blob: " + result.url)
+                })
+            }
+
+
+            insertProfile(callback, resourceID, URLimageStorage, response);
+
+        });
+
+};
+
+router.get('/getProfilePicture/:resourceID', (req, res, next) => {
+
+    let ModelAsistencia = db.collection("profile");
+    let resourceID = req.params.resourceID;
+
+    ModelAsistencia.findOne(
+        {"resource": resourceID},
+        {"url": "url"},
+        function (err, result) {
+
+            if (err) {
+                console.log(err);
+                return;
+            }
+
+            console.log(result);
+            const file = fs.createWriteStream("./tmp/" + req.params.resourceID + ".jpg");
+
+            blobService.getBlobToStream(containerName, result.url, file, {'disableContentMD5Validation': true },
+                function callback (err, data) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    res.end(res.json(data));
+                }
+            });
+
+        });
+
+});
 
 module.exports = router;
