@@ -58,12 +58,11 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
     let ModelAsistencia = db.collection("asistance");
 
     let newDay = moment(new Date());
-    moment.tz.setDefault("America/Lima");
     let frmDate = moment.tz(newDay, "America/Lima").format("YYYY-MM-DD HH:mm:ss");
 
     ModelAsistencia.insertOne({
         "resource": resourceID,
-        "startdate": new Date(frmDate),
+        "startdate": new Date(),
         "startlocation": startLocation,
         "completed": 0,
         "enddate": null,
