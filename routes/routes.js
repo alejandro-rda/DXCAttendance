@@ -57,9 +57,6 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
 
     let ModelAsistencia = db.collection("asistance");
 
-    let newDay = moment(new Date());
-    let frmDate = moment.tz(newDay, "America/Lima").format("YYYY-MM-DD HH:mm:ss");
-
     ModelAsistencia.insertOne({
         "resource": resourceID,
         "startdate": new Date(),
@@ -91,12 +88,9 @@ let updateDocument = function (callback, uID, endDate, endLocation, res) {
 
     let ModelAsistencia = db.collection("asistance");
 
-    let newDay = moment(new Date());
-    let frmDate = moment.tz(newDay, "America/Lima").format("YYYY-MM-DD HH:mm:ss");
-
     let newvalues = {
         $set: {
-            enddate: new Date(frmDate),
+            enddate: new Date(),
             endlocation: endLocation,
             completed: 1
         }
