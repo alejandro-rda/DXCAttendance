@@ -1,6 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 const moment = require('moment-timezone');
+moment.tz.setDefault("America/Lima");
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -26,7 +27,7 @@ const multer = require('multer')
     , blobService = azureStorage.createBlobService(connectionString)
     , getStream = require('into-stream')
     , containerName = 'dxcprofilepictures',
-    BlockBlobURL  = require('azure-storage');
+    BlockBlobURL = require('azure-storage');
 
 MongoClient.connect(url, function (err, client) {
     if (err) {
@@ -38,7 +39,7 @@ MongoClient.connect(url, function (err, client) {
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
-    res.end("The service of DXC-Attendance it works!");
+    res.end("The service of DXC-Attendance it works!: " + new Date());
 });
 
 router.post("/asistenciaDXC", function (req, res, next) {
@@ -56,9 +57,13 @@ let insertDocument = function (callback, resourceID, startDate, startLocation, r
 
     let ModelAsistencia = db.collection("asistance");
 
+    let newDay = moment(new Date());
+    moment.tz.setDefault("America/Lima");
+    let frmDate = moment.tz(newDay, "America/Lima").format("YYYY-MM-DD HH:mm:ss");
+
     ModelAsistencia.insertOne({
         "resource": resourceID,
-        "startdate": new Date(),
+        "startdate": new Date(frmDate),
         "startlocation": startLocation,
         "completed": 0,
         "enddate": null,
@@ -87,9 +92,12 @@ let updateDocument = function (callback, uID, endDate, endLocation, res) {
 
     let ModelAsistencia = db.collection("asistance");
 
+    let newDay = moment(new Date());
+    let frmDate = moment.tz(newDay, "America/Lima").format("YYYY-MM-DD HH:mm:ss");
+
     let newvalues = {
         $set: {
-            enddate: new Date(),
+            enddate: new Date(frmDate),
             endlocation: endLocation,
             completed: 1
         }
@@ -136,7 +144,6 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                                         format: "%Y-%m-%d %H:%M:%S",
                                         date:
                                             {"$add": ["$enddate", 3600000 * -5]}
-
                                     }
                                 }
                             }
@@ -165,14 +172,13 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                                         format: "%Y-%m-%d %H:%M:%S",
                                         date: {"$add": ["$startdate", 3600000 * -5]}
                                     }
-                                },
-                                enddate: {
-                                    $dateToString: {
-                                        format: "%Y-%m-%d %H:%M:%S",
-                                        date:
-                                            {"$add": ["$enddate", 3600000 * -5]}
-
-                                    }
+                                }
+                            },
+                            enddate: {
+                                $dateToString: {
+                                    format: "%Y-%m-%d %H:%M:%S",
+                                    date:
+                                        {"$add": ["$enddate", 3600000 * -5]}
                                 }
                             }
                         },
@@ -203,9 +209,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                                     $dateToString: {
                                         format: "%Y-%m-%d %H:%M:%S",
                                         date:
-                                            {"$add": ["$enddate", 3600000 * -5]}
-
-                                    }
+                                            {"$add": ["$enddate", 3600000 * -5]}                                    }
                                 }
                             }
                         },
@@ -224,14 +228,16 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
 
             function (err, results) {
 
-                if (results.assistanceToday.length > 0) {
+                console.log(results);
+
+                if (results.assistanceToday != null && results.assistanceToday.length > 0) {
                     res.end(res.json(results.assistanceToday));
                 } else {
-                    if (results.assistanceFirstToday.length > 0) {
+                    if (results.assistanceFirstToday != null && results.assistanceFirstToday.length > 0) {
                         res.end(res.json(results.assistanceFirstToday));
                     }
                     else {
-                        if (results.assistanceLastYesterday.length > 0) {
+                        if (results.assistanceLastYesterday != null && results.assistanceLastYesterday.length > 0) {
                             res.end(res.json(results.assistanceLastYesterday))
                         }
                         else {
@@ -284,7 +290,6 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
                                     format: "%Y-%m-%d %H:%M:%S",
                                     date:
                                         {"$add": ["$enddate", 3600000 * -5]}
-
                                 }
                             }
                         }
@@ -310,6 +315,7 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
     }
 )
 ;
+
 
 const getBlobName = originalName => {
     const identifier = Math.random().toString().replace(/0\./, ''); // remove "0." from start of string
@@ -402,7 +408,7 @@ router.get('/getProfilePicture/:resourceID', (req, res, next) => {
                 res.end(res.json(err));
             }
 
-           res.end(res.json(result));
+            res.end(res.json(result));
 
         });
 
