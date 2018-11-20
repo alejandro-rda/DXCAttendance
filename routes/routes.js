@@ -334,7 +334,7 @@ router.post('/uploadProfilePicture', uploadStrategy, (req, res) => {
         }
 
 
-        let resourceId = req.body.resource;
+        let resourceId = req.headers.resource;
         getProfile(function () {
         }, resourceId, blobName, res);
 
