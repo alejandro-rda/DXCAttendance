@@ -20,9 +20,9 @@ const storageName = {
     }
 };
 
-const multer = require('multer')
-    , inMemoryStorage = multer.memoryStorage()
-    , uploadStrategy = multer({storage: inMemoryStorage}).single('image')
+    const multer = require('multer'),
+    storage = multer.memoryStorage(),
+    upload = multer({ storage: storage })
     , azureStorage = require('azure-storage')
     , blobService = azureStorage.createBlobService(connectionString)
     , getStream = require('into-stream')
@@ -313,17 +313,12 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
 ;
 
 
-const getBlobName = originalName => {
+router.post('/uploadProfilePicture', upload.single('file'), (req, res) => {
+
     const identifier = Math.random().toString().replace(/0\./, ''); // remove "0." from start of string
-    return `${identifier}-${originalName}`;
-};
-
-router.post('/uploadProfilePicture', uploadStrategy, (req, res) => {
-
-    console.log("File: " + req.file);
 
     const
-        blobName = getBlobName(req.file.originalname)
+        blobName = identifier
         , stream = getStream(req.file.buffer)
         , streamLength = req.file.buffer.length
     ;
