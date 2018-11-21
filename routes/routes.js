@@ -320,6 +320,8 @@ const getBlobName = originalName => {
 
 router.post('/uploadProfilePicture', uploadStrategy, (req, res) => {
 
+    console.log("File: " + req.file);
+
     const
         blobName = getBlobName(req.file.originalname)
         , stream = getStream(req.file.buffer)
@@ -350,6 +352,12 @@ let insertProfile = function (callback, resourceID, URLimageStorage, response) {
         {"resource": resourceID, "url": URLimageStorage},
         {upsert: true},
         function (err, result) {
+
+            if (err) {
+                console.log(err);
+                return;
+            }
+
             assert.equal(err, null);
             response.end(response.json(result));
         });
