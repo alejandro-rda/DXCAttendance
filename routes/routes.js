@@ -297,7 +297,7 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
                             validEndDate: true
                         }
                     },
-                    {$sort: {stardate: 1, enddate: 1}}
+                    {$sort: {stardate: -1, enddate: -1}}
                 ]).toArray(cb);
             }
         }, function (err, results) {
