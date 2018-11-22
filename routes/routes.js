@@ -183,7 +183,7 @@ router.get("/asistenciaDiaxRecurso/:resourceID&:currDate", function (req, res, n
                             startdate: {$regex: currDate, $options: 'g'},
                         }
                     },
-                    {$sort: {stardate: 1, enddate: 1}},
+                    {$sort: {stardate: -1, enddate: -1}},
                 ]).toArray(cb)
             },
             assistanceLastYesterday: function (cb) {
