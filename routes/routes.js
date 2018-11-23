@@ -262,7 +262,7 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
         let end = new Date(endDate.replace(/(\d{4})-(\d{2})-(\d{2})/, "$1/$2/$3"));
         end.setHours(23, 59, 59);
 
-        console.log(end.toLocaleDateString() + " " + end.toLocaleTimeString());
+        console.log(start.toLocaleDateString() + " - " + end.toLocaleTimeString());
 
         async.parallel({
             assistanceHistoric: function (cb) {
@@ -273,8 +273,8 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
                             startlocation: 1,
                             resource: 1,
                             completed: 1,
-                            validStartDate: {'$gte': [{"$add": ["$startdate", 3600000 * -5]}, start]},
-                            validEndDate: {'$lte': [{"$add": ["$enddate", 3600000 * -5]}, end]},
+                            validStartDate: {'$gte': ["$startdate", start]},
+                            validEndDate:   {'$lte': ["$enddate", end]},
                             startdate: {
                                 $dateToString: {
                                     format: "%Y-%m-%d %H:%M:%S",
