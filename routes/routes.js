@@ -427,15 +427,16 @@ router.get('/validLastAttendance/:resourceID&:lastUpdateID', (req, res, next) =>
                 res.end(res.json(err));
             }
 
-            let lastDay = res.startdate;
-            let newDay = moment(lastDay).add(4, 'h').toDate();
+            let startDate = moment(result.startdate);
+            let sysDate = moment(new Date());
+            let duration = moment.duration(sysDate.diff(startDate));
+            let hours = duration.asHours();
 
-            if (newDay < new Date()) {
+            if (hours>4) {
                 res.end(res.json(true));
             } else {
                 res.end(res.json(false));
             }
-
         });
 
 });
