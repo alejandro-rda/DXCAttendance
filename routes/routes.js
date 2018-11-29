@@ -453,22 +453,11 @@ router.get("/validAsistenciaIngreso/:resourceID&:currDate", function (req, res, 
                     ModelAsistencia.aggregate([
                         {
                             $project: {
-                                endlocation: 1,
-                                startlocation: 1,
                                 resource: 1,
-                                completed: 1,
                                 startdate: {
                                     $dateToString: {
                                         format: "%Y-%m-%d %H:%M:%S",
                                         date: {"$add": ["$startdate", 3600000 * -5]}
-                                    }
-                                },
-                                enddate: {
-                                    $dateToString: {
-                                        format: "%Y-%m-%d %H:%M:%S",
-                                        date:
-                                            {"$add": ["$enddate", 3600000 * -5]}
-
                                     }
                                 }
                             }
@@ -479,23 +468,19 @@ router.get("/validAsistenciaIngreso/:resourceID&:currDate", function (req, res, 
                                 startdate: {$regex: currDate, $options: 'g'},
                             }
                         },
-                        {$sort: {start: 1, end: 1}},
                     ]).toArray(cb)
                 }},
-                function (err, results) {
+            function (err, results) {
 
-                    if (results.assistanceToday != null && results.assistanceToday.length > 0) {
-                        if (results.assistanceToday.length < 2) {
-                            res.end(res.json("VÁLIDO"));
-                        }else if(results.assistanceToday.length === 2){
-                            res.end(res.json("ÚLTIMA"));
-                        }else{
-                            res.end(res.json("INVÁLIDO"));
-                        }
-                    }else{
+                let size = results.assistanceToday.length;
+
+                    if (size < 2) {
                         res.end(res.json("VÁLIDO"));
+                    }else if(size === 2){
+                        res.end(res.json("ÚLTIMA"));
+                    }else{
+                        res.end(res.json("INVÁLIDO"));
                     }
-
 
             }
         )
