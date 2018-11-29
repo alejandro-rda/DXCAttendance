@@ -475,11 +475,11 @@ router.get("/validAsistenciaIngreso/:resourceID&:currDate", function (req, res, 
                 let size = results.assistanceToday.length;
 
                     if (size < 2) {
-                        res.end(res.json("VAL"));
+                        res.end("VAL");
                     }else if(size === 2){
-                        res.end(res.json("ULT"));
+                        res.end("ULT");
                     }else{
-                        res.end(res.json("INV"));
+                        res.end("INV");
                     }
 
             }
