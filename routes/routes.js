@@ -484,8 +484,6 @@ router.get("/validAsistenciaIngreso/:resourceID&:currDate", function (req, res, 
                 }},
                 function (err, results) {
 
-                    console.log(results);
-
                     if (results.assistanceToday != null && results.assistanceToday.length > 0) {
                         if (results.assistanceToday.length < 2) {
                             res.end(res.json("VÁLIDO"));
