@@ -269,8 +269,6 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
                             startlocation: 1,
                             resource: 1,
                             completed: 1,
-                            validStartDate: {'$gte': ["$startdate", start]},
-                            validEndDate: {'$lte': ["$enddate", end]},
                             startdate: {
                                 $dateToString: {
                                     format: "%Y-%m-%d %H:%M:%S",
@@ -283,7 +281,9 @@ router.get("/asistenciaHistoricoxRecurso/:resourceID&:startDate&:endDate", funct
                                     date:
                                         {"$add": ["$enddate", 3600000 * -5]}
                                 }
-                            }
+                            },
+                            validStartDate: {'$gte': ["$startdate", start]},
+                            validEndDate: {'$lt': ["$startdate", end]}
                         }
                     },
                     {
