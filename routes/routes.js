@@ -492,9 +492,10 @@ router.get("/validAsistenciaIngreso/:resourceID&:currDate", function (req, res, 
                         }else{
                             res.end(res.json("INVÁLIDO"));
                         }
+                    }else{
+                        res.end(res.json("VÁLIDO"));
                     }
 
-                    res.end(res.json("VÁLIDO"));
 
             }
         )
