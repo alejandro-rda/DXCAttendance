@@ -22,7 +22,7 @@
         "mongodb": "^3.1.8",
         "morgan": "~1.9.0",
         "multer": "^1.4.1",
-        "pug": "2.0.0-beta11",
+        "pug": "3.0.1",
         "azure-storage": "latest"
     }
 }
